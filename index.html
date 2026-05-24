@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Ejecutivo · Metas 2026 · CEO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  /* Fondo general — blanco roto / gris muy claro */
+  --bg-0:#f0f4f9;
+  --bg-1:#e8eef6;
+  --bg-2:#dde5f0;
+  --bg-3:#d0daea;
+  /* Cards — blanco puro con sutil tinte azul */
+  --bg-card:linear-gradient(158deg,#ffffff 0%,#f5f8fd 60%,#eef3fb 100%);
+  --bg-card2:linear-gradient(158deg,#eaf0fa 0%,#dde8f6 100%);
+  /* Bordes */
+  --border:#c2cfe0;
+  --border-soft:#d4dff0;
+  /* Texto — azul marino institucional */
+  --text-1:#0d1e3d;
+  --text-2:#2c4470;
+  --text-3:#6a82a8;
+  --text-4:#9aaec8;
+  /* Azul institucional CEO */
+  --accent:#1a4fa0;
+  --accent-2:#2e6acc;
+  --accent-3:#4d8ae8;
+  --glow:rgba(26,79,160,0.10);
+  /* Semáforo */
+  --red:#c0392b;    --red-l:#e74c3c;
+  --yellow:#c9a227; --yellow-l:#d4ac0d;
+  --amber:#d97a28;  --amber-l:#e67e22;
+  --green:#1a7a46;  --green-l:#27ae60;
+  /* Acento dorado → azul institucional para tema claro */
+  --gold:#1a4fa0;
+  --gold2:#2e6acc;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{
+  background:var(--bg-0);color:var(--text-1);
+  font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;
+  height:100%;overflow:hidden;
+}
+body{
+  background:
+    radial-gradient(ellipse 110% 50% at 50% -10%,rgba(26,79,160,0.08),transparent 60%),
+    radial-gradient(ellipse 60% 40% at 100% 100%,rgba(46,106,204,0.06),transparent 60%),
+    linear-gradient(185deg,#f0f4f9 0%,#e8eef8 50%,#edf2fa 100%);
+  background-attachment:fixed;
+}
+
+/* ── LAYOUT ─────────────────────────────────── */
+.app{padding:10px 18px 10px;height:100vh;display:flex;flex-direction:column;gap:8px;max-width:1920px;margin:0 auto}
+
+/* ── HEADER ──────────────────────────────────── */
+.header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:7px;border-bottom:2px solid var(--accent)}
+.brand .eyebrow{font-size:9.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.brand h1{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:22px;line-height:1;letter-spacing:-.3px;color:var(--text-1)}
+.brand h1 span{font-style:italic;color:var(--accent-2)}
+.header-right{display:flex;align-items:center;gap:10px}
+/* ── FILE INFO + HISTORIAL ───────────────────── */
+.file-info-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.file-lbl{font-size:10px;color:var(--text-3);letter-spacing:.03em}
+.file-lbl b{color:var(--text-2)}
+.file-date{font-size:9px;color:var(--accent);letter-spacing:.08em;font-weight:600}
+.hist-btn{
+  background:none;border:none;color:var(--text-3);font-size:9px;letter-spacing:.08em;
+  cursor:pointer;font-family:'Inter',sans-serif;text-decoration:underline;
+  text-transform:uppercase;padding:0;
+}
+.hist-btn:hover{color:var(--accent)}
+
+/* Modal historial */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;
+  align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:#fff;border:1px solid var(--border);border-radius:4px;
+  padding:22px 26px;min-width:380px;max-width:560px;width:90%;position:relative;
+  box-shadow:0 16px 48px rgba(13,30,61,.18);
+}
+.modal::before{content:"";position:absolute;top:0;left:0;width:36px;height:2px;background:var(--accent)}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--text-1);margin-bottom:4px}
+.modal-sub{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-3);margin-bottom:16px}
+.modal-close{
+  position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text-3);
+  font-size:18px;cursor:pointer;line-height:1;
+}
+.modal-close:hover{color:var(--text-1)}
+.hist-list{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
+.hist-item{
+  display:flex;align-items:center;gap:12px;
+  background:var(--bg-1);border:1px solid var(--border-soft);
+  border-radius:2px;padding:8px 12px;
+}
+.hist-item.active{border-color:var(--accent);background:#eaf2ff}
+.hist-num{font-size:10px;color:var(--text-3);font-weight:600;width:20px;text-align:right}
+.hist-name{font-size:11.5px;color:var(--text-1);font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-date-parsed{font-size:10px;color:var(--accent);font-weight:600;white-space:nowrap}
+.hist-tag{font-size:9px;color:var(--accent-2);border:1px solid var(--border);padding:1px 6px;border-radius:1px}
+.modal-empty{font-size:12px;color:var(--text-3);font-style:italic;padding:16px 0;text-align:center}
+.upload-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  background:linear-gradient(180deg,var(--accent-2),var(--accent));
+  color:#fff;border:1px solid var(--accent);padding:7px 13px;border-radius:2px;
+  cursor:pointer;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+  font-weight:600;transition:all .2s;font-family:'Inter',sans-serif;
+  box-shadow:0 2px 8px rgba(26,79,160,.25);
+}
+.upload-btn:hover{background:linear-gradient(180deg,var(--accent-3),var(--accent-2));box-shadow:0 4px 14px rgba(26,79,160,.35)}
+.upload-btn svg{width:12px;height:12px}
+input[type=file]{display:none}
+
+/* ── FILTERS ROW ─────────────────────────────── */
+.filters-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1.55fr;gap:8px}
+.filter-group{
+  background:#fff;border:1px solid var(--border);border-radius:3px;
+  padding:7px 11px;position:relative;
+  box-shadow:0 1px 4px rgba(13,30,61,.07);
+}
+.filter-group::before{content:"";position:absolute;top:0;left:0;width:20px;height:2px;background:var(--accent)}
+.filter-label{font-size:8.5px;letter-spacing:.25em;text-transform:uppercase;color:var(--text-3);font-weight:600;display:block;margin-bottom:3px}
+
+/* multi-select */
+.multi-select{position:relative}
+.ms-input{
+  background:transparent;color:var(--text-1);border:none;padding:1px 0;
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:500;
+  cursor:pointer;outline:none;width:100%;display:flex;align-items:center;justify-content:space-between;gap:5px;
+}
+.ms-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.ms-arrow{color:var(--text-3);font-size:7.5px}
+.ms-dropdown{
+  position:absolute;top:calc(100% + 5px);left:-11px;right:-11px;
+  background:#fff;border:1px solid var(--border);border-radius:2px;
+  max-height:240px;overflow-y:auto;z-index:80;
+  box-shadow:0 8px 24px rgba(13,30,61,.14);display:none;
+}
+.ms-dropdown.open{display:block}
+.ms-option{
+  padding:7px 12px;font-size:11.5px;color:var(--text-2);cursor:pointer;
+  display:flex;align-items:center;gap:8px;transition:background .1s;
+}
+.ms-option:hover{background:var(--bg-1)}
+.ms-option.all-opt{border-bottom:1px solid var(--border);color:var(--accent);font-weight:600}
+.ms-check{
+  width:13px;height:13px;border:1px solid var(--border);border-radius:1px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--bg-0);
+}
+.ms-option.checked .ms-check{background:var(--accent);border-color:var(--accent)}
+.ms-option.checked .ms-check::after{
+  content:"";width:6px;height:3.5px;border-left:2px solid #fff;border-bottom:2px solid #fff;
+  transform:rotate(-45deg) translate(1px,-1px);
+}
+
+/* info-banner */
+.info-banner{
+  background:linear-gradient(158deg,var(--accent) 0%,var(--accent-2) 100%);
+  border:1px solid var(--accent);border-radius:3px;
+  padding:7px 14px;display:flex;align-items:center;gap:10px;position:relative;
+  box-shadow:0 2px 10px rgba(26,79,160,.30);
+}
+.info-banner::before{content:"";position:absolute;top:0;left:0;width:20px;height:2px;background:rgba(255,255,255,.4)}
+.stat{display:flex;flex-direction:column;gap:0}
+.stat .lbl{font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.70);font-weight:600}
+.stat .val{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:#fff;line-height:1;font-variant-numeric:tabular-nums}
+.stat .val.rank-val{font-size:14px}
+.stat .sub-val{font-size:9px;color:rgba(255,255,255,.60);margin-top:1px}
+.vsep{width:1px;height:22px;background:rgba(255,255,255,.25);flex-shrink:0}
+
+/* ── MAIN GRID ───────────────────────────────── */
+.main-grid{display:grid;grid-template-columns:1.02fr 1.28fr;gap:10px;flex:1;min-height:0}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0}
+
+.card{
+  background:#fff;border:1px solid var(--border);border-radius:3px;
+  padding:11px 15px;position:relative;display:flex;flex-direction:column;min-height:0;
+  box-shadow:0 1px 6px rgba(13,30,61,.08);
+}
+.card::before{content:"";position:absolute;top:0;left:0;width:28px;height:2px;background:var(--accent)}
+.card-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;gap:8px}
+.card-title{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--text-1);letter-spacing:-.2px;line-height:1}
+.card-sub{font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-3);font-weight:600}
+
+/* ── GAUGES ──────────────────────────────────── */
+.gauges{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.gc{
+  background:linear-gradient(165deg,#eef4ff,#e4edfb);border:1px solid var(--border);border-radius:2px;
+  padding:8px 6px 6px;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;
+}
+.gc::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,var(--glow),transparent 70%);pointer-events:none}
+.gc-label{font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-2);font-weight:600;margin-bottom:1px;text-align:center}
+.gc-wrap{position:relative;width:100%;display:flex;justify-content:center}
+.gc-svg{width:116px;height:70px;display:block}
+.gc-val{position:absolute;bottom:1px;left:0;right:0;text-align:center;font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:700;line-height:1;color:var(--text-1)}
+.gc-val small{font-size:12px;color:var(--text-2);margin-left:1px;font-weight:500}
+.gc-meta{margin-top:3px;font-size:9.5px;color:var(--text-2);text-align:center;line-height:1.3}
+.gc-meta b{color:var(--text-1);font-weight:600}
+
+/* ── RANKING integrado en gauges card ───────── */
+.rk-inline{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px;border-top:1px solid var(--border-soft);padding-top:7px}
+.rk-section{}
+.rk-title{font-size:7.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-3);font-weight:600;margin-bottom:4px}
+.rk-list{display:flex;flex-direction:column;gap:3px}
+.rk-item{
+  display:flex;align-items:center;gap:6px;
+  background:var(--bg-1);border:1px solid var(--border-soft);
+  border-radius:2px;padding:3px 7px;transition:background .12s;
+}
+.rk-item:hover{background:var(--bg-2)}
+.rk-medal{
+  width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:8px;font-weight:700;flex-shrink:0;
+}
+.medal-1{background:linear-gradient(135deg,#c9a027,#7a5e12);color:#fff}
+.medal-2{background:linear-gradient(135deg,#8a9aaa,#4a5a6a);color:#fff}
+.medal-3{background:linear-gradient(135deg,#8a5a38,#5a3520);color:#fff}
+.rk-name{font-size:10px;font-weight:500;color:var(--text-2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk-pct{font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ── INSIGHTS ────────────────────────────────── */
+.insights-card{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.insights-list{overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-right:3px;flex:1}
+.insight{
+  background:var(--bg-1);border-left:3px solid var(--accent);
+  padding:7px 10px;border-radius:0 3px 3px 0;border:1px solid var(--border-soft);border-left:3px solid var(--accent);
+}
+.insight.warn{border-left-color:var(--amber)}
+.insight.danger{border-left-color:var(--red)}
+.insight.success{border-left-color:var(--green)}
+.insight-head{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.insight-icon{
+  width:16px;height:16px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;
+  background:var(--accent);color:#fff;
+}
+.insight.warn .insight-icon{background:var(--amber)}
+.insight.danger .insight-icon{background:var(--red)}
+.insight.success .insight-icon{background:var(--green)}
+.insight-title{font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-1);font-weight:700}
+.insight-body{font-size:10.5px;line-height:1.48;color:var(--text-2)}
+.insight-body b{color:var(--text-1);font-weight:600}
+
+/* ── DETAIL TABLE ────────────────────────────── */
+.detail-card{flex:1.5;min-height:0;display:flex;flex-direction:column}
+.table-wrap{overflow-y:auto;flex:1;min-height:0;border:1px solid var(--border-soft);border-radius:2px}
+table.dt{width:100%;border-collapse:collapse;font-size:11px}
+table.dt thead{position:sticky;top:0;z-index:2}
+table.dt th{
+  text-align:left;padding:6px 8px;font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:#fff;font-weight:600;border-bottom:1px solid var(--accent);background:var(--accent);
+}
+table.dt th.num{text-align:right}
+table.dt td{padding:4px 8px;border-bottom:1px solid var(--border-soft);color:var(--text-2);line-height:1.2}
+table.dt tbody tr:hover{background:#eef3fd}
+table.dt tbody tr.low-perf{background:#fff5f5}
+table.dt tbody tr.low-perf td.prog-name{color:var(--red);font-weight:500}
+table.dt td.num{text-align:right;font-variant-numeric:tabular-nums;color:var(--text-1);font-weight:500}
+table.dt tfoot td{padding:6px 8px;background:var(--bg-2);font-weight:700;color:var(--text-1);border-top:2px solid var(--accent);font-size:11px}
+table.dt tfoot td.num{text-align:right;font-variant-numeric:tabular-nums}
+.pp{display:inline-block;padding:1.5px 7px;border-radius:1px;font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;border:1px solid;min-width:42px;text-align:center}
+.pp-r{color:#c0392b;border-color:rgba(192,57,43,.4);background:rgba(192,57,43,.08)}
+.pp-y{color:#b7860d;border-color:rgba(183,134,13,.4);background:rgba(183,134,13,.08)}
+.pp-a{color:#b35a0a;border-color:rgba(179,90,10,.4);background:rgba(179,90,10,.08)}
+.pp-g{color:#1a7a46;border-color:rgba(26,122,70,.4);background:rgba(26,122,70,.08)}
+
+/* ── COMPARATIVE CHART ───────────────────────── */
+.chart-card{flex:1;min-height:0;display:flex;flex-direction:column}
+.chart-wrap{position:relative;flex:1;min-height:0;width:100%}
+.delta-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 11px;border-radius:2px;font-size:11px;font-weight:700;
+  letter-spacing:.04em;font-variant-numeric:tabular-nums;
+}
+.delta-pos{background:rgba(26,122,70,.10);border:1px solid rgba(26,122,70,.35);color:var(--green)}
+.delta-neg{background:rgba(192,57,43,.10);border:1px solid rgba(192,57,43,.35);color:var(--red)}
+.delta-neu{background:rgba(26,79,160,.10);border:1px solid rgba(26,79,160,.30);color:var(--accent)}
+.chart-legend{display:flex;gap:16px;font-size:10px;color:var(--text-3);margin-top:3px;justify-content:center;flex-wrap:wrap}
+.li{display:flex;align-items:center;gap:5px}
+.ld{width:9px;height:9px;border-radius:1px}
+.chart-meta{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+
+/* ── EMPTY ───────────────────────────────────── */
+.empty{text-align:center;padding:20px;color:var(--text-3);font-size:11.5px;font-style:italic}
+
+/* ── SCROLLBAR ───────────────────────────────── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg-1)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:0}
+::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<header class="header">
+  <div class="brand">
+    <div class="eyebrow">Reporte Estratégico · Ciclo 2026</div>
+    <h1>Dashboard <span>Ejecutivo</span> de Metas</h1>
+  </div>
+  <div class="header-right">
+    <div class="file-info-wrap">
+      <span class="file-lbl">Fuente: <b id="fileName">—</b></span>
+      <span class="file-date" id="fileDateLabel"></span>
+      <button class="hist-btn" id="histBtn" onclick="openModal()">Ver historial de versiones</button>
+    </div>
+    <label class="upload-btn" for="excelInput">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Cargar Excel
+    </label>
+    <input type="file" id="excelInput" accept=".xlsx,.xls,.xlsm">
+  </div>
+</header>
+
+<!-- MODAL HISTORIAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">Historial de Versiones</div>
+    <div class="modal-sub">Archivos cargados en esta sesión</div>
+    <div class="hist-list" id="histList"><div class="modal-empty">Ningún archivo cargado aún</div></div>
+  </div>
+</div>
+
+<!-- FILTERS + KPIs -->
+<section class="filters-row">
+  <div class="filter-group">
+    <span class="filter-label">Campus</span>
+    <div class="multi-select" data-key="campus"><div class="ms-input"><span class="ms-text">Todas</span><span class="ms-arrow">▼</span></div><div class="ms-dropdown"></div></div>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Nivel</span>
+    <div class="multi-select" data-key="nivel"><div class="ms-input"><span class="ms-text">Todas</span><span class="ms-arrow">▼</span></div><div class="ms-dropdown"></div></div>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Tipo de Avance</span>
+    <div class="multi-select" data-key="tipo"><div class="ms-input"><span class="ms-text">Todas</span><span class="ms-arrow">▼</span></div><div class="ms-dropdown"></div></div>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Meses Acumulados</span>
+    <div class="multi-select" data-key="meses"><div class="ms-input"><span class="ms-text">Mes actual</span><span class="ms-arrow">▼</span></div><div class="ms-dropdown"></div></div>
+  </div>
+  <div class="info-banner">
+    <div class="stat"><div class="lbl">Inscritos</div><div class="val" id="kpiIns">0</div></div>
+    <div class="vsep"></div>
+    <div class="stat"><div class="lbl">Pendiente</div><div class="val" id="kpiPend">0</div></div>
+    <div class="vsep"></div>
+    <div class="stat"><div class="lbl">Programas</div><div class="val" id="kpiProg">0</div></div>
+    <div class="vsep"></div>
+    <div class="stat"><div class="lbl">Campus</div><div class="val" id="kpiCamp">0</div></div>
+    <div class="vsep"></div>
+    <div class="stat"><div class="lbl">Posición</div><div class="val rank-val" id="kpiPos">—</div><div class="sub-val" id="kpiPosType"></div></div>
+  </div>
+</section>
+
+<!-- MAIN GRID -->
+<div class="main-grid">
+  <!-- LEFT COL -->
+  <div class="col">
+    <!-- Gauges -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Indicadores de Avance</div>
+        <div class="card-sub">Cumplimiento · Ranking institucional</div>
+      </div>
+      <div class="gauges">
+        <div class="gc">
+          <div class="gc-label">Meta General</div>
+          <div class="gc-wrap"><svg class="gc-svg" viewBox="0 0 200 120" id="gG"></svg><div class="gc-val" id="gGV">0<small>%</small></div></div>
+          <div class="gc-meta" id="gGM">Avance: <b>0</b> / Meta: <b>0</b></div>
+        </div>
+        <div class="gc">
+          <div class="gc-label">Meta Digital</div>
+          <div class="gc-wrap"><svg class="gc-svg" viewBox="0 0 200 120" id="gD"></svg><div class="gc-val" id="gDV">0<small>%</small></div></div>
+          <div class="gc-meta" id="gDM">Avance: <b>0</b> / Meta: <b>0</b></div>
+        </div>
+        <div class="gc">
+          <div class="gc-label">Meta Vinculación</div>
+          <div class="gc-wrap"><svg class="gc-svg" viewBox="0 0 200 120" id="gV"></svg><div class="gc-val" id="gVV">0<small>%</small></div></div>
+          <div class="gc-meta" id="gVM">Avance: <b>0</b> / Meta: <b>0</b></div>
+        </div>
+      </div>
+      <!-- Ranking integrado -->
+      <div class="rk-inline">
+        <div class="rk-section">
+          <div class="rk-title">▸ Universidades · Top 3</div>
+          <div class="rk-list" id="rkUO"></div>
+        </div>
+        <div class="rk-section">
+          <div class="rk-title">▸ Colegios · Top 3</div>
+          <div class="rk-list" id="rkCSA"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Insights -->
+    <div class="card insights-card">
+      <div class="card-head">
+        <div class="card-title">Insights Ejecutivos</div>
+        <div class="card-sub">Análisis automático · Prioridades</div>
+      </div>
+      <div class="insights-list" id="insightsList"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT COL -->
+  <div class="col">
+    <!-- Detail table -->
+    <div class="card detail-card">
+      <div class="card-head">
+        <div class="card-title">Detalle por Oferta Académica</div>
+        <div class="card-sub" id="detailSub">Filtros activos</div>
+      </div>
+      <div class="table-wrap" id="tableWrap"></div>
+    </div>
+
+    <!-- Chart -->
+    <div class="card chart-card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Comparativo Histórico 2025 vs 2026</div>
+          <div class="card-sub" id="chartSub">Mes seleccionado</div>
+        </div>
+        <div id="deltaBadge"></div>
+      </div>
+      <div class="chart-wrap"><canvas id="histChart"></canvas></div>
+      <div class="chart-legend">
+        <div class="li"><span class="ld" style="background:#4a7cc9"></span>Ciclo 2025</div>
+        <div class="li"><span class="ld" style="background:#1a4fa0"></span>Ciclo 2026</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+/* ================================================================
+   CONSTANTS & STATE
+================================================================ */
+const MONTHS_FULL = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MONTHS_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const TIPO_OPTS = [{value:'inscritos',label:'Inscritos'},{value:'reinscritos',label:'Reinscritos'}];
+const CURRENT_MONTH_IDX = new Date().getMonth(); // 0-based
+const CURRENT_MONTH = MONTHS_FULL[CURRENT_MONTH_IDX];
+
+const STATE = {
+  inscritos:[],
+  reinscritos:[],
+  historico:[],
+  filters:{
+    campus: new Set(['__ALL__']),
+    nivel:  new Set(['__ALL__']),
+    tipo:   new Set(['__ALL__']),
+    meses:  new Set([CURRENT_MONTH]) // default: solo mes actual
+  },
+  fileName:'Data_Dashboard.xlsx'
+};
+
+/* ================================================================
+   UTILS
+================================================================ */
+const $  = id => document.getElementById(id);
+const fmt = n => (!n && n!==0) ? '0' : Math.round(+n).toLocaleString('es-MX');
+const fmtPct = n => Math.round((+n||0)*100) + '%';
+const normC = s => s ? String(s).trim().replace(/\.$/,'').toLowerCase() : '';
+const isAll = set => set.has('__ALL__') || set.size===0;
+
+function colorPct(p){
+  if(p<=.25) return '#c84c56';
+  if(p<=.50) return '#c9a227';
+  if(p<=.75) return '#d97a28';
+  return '#3a9660';
+}
+function ppClass(p){
+  if(p<=.25) return 'pp-r';
+  if(p<=.50) return 'pp-y';
+  if(p<=.75) return 'pp-a';
+  return 'pp-g';
+}
+
+/* ================================================================
+   EXCEL LOADING
+================================================================ */
+async function loadDefault(url){
+  try{
+    const r=await fetch(url);if(!r.ok)throw 0;
+    const buf=await r.arrayBuffer();
+    // Extraer nombre del url
+    const name=url.split('/').pop();
+    STATE.fileName=name;
+    addToHistory(name);
+    parseWB(buf);
+  }
+  catch(e){console.warn('No auto-load.',e);renderAll();}
+}
+function parseWB(buf){
+  const wb = XLSX.read(buf,{type:'array'});
+  const sn = wb.SheetNames;
+  const s1 = sn.find(n=>/concentrado|inscrit/i.test(n))||sn[0];
+  const s2 = sn.find(n=>/reinscrit/i.test(n))||sn[1];
+  const s3 = sn.find(n=>/avance.*25|25.*26/i.test(n))||sn[2];
+
+  // Sheet 1 – header detection
+  const raw = XLSX.utils.sheet_to_json(wb.Sheets[s1],{header:1,defval:null});
+  const hi  = raw.findIndex(r=>r&&r.some(c=>String(c).trim().toLowerCase()==='campus'));
+  const hdrs= raw[hi>=0?hi:0].map(h=>h==null?'':String(h).trim());
+  STATE.inscritos = raw.slice(hi+1).filter(r=>r&&r[0]).map(r=>{
+    const o={};hdrs.forEach((h,i)=>{if(h)o[h]=r[i];});return o;
+  }).filter(o=>o['Campus']);
+
+  STATE.reinscritos = XLSX.utils.sheet_to_json(wb.Sheets[s2],{defval:null}).filter(o=>o['Campus']);
+  STATE.historico   = XLSX.utils.sheet_to_json(wb.Sheets[s3],{defval:null}).filter(o=>o['Campus']);
+
+  buildFilters();
+  renderAll();
+}
+
+/* ================================================================
+   MULTI-SELECT BUILD
+================================================================ */
+function buildFilters(){
+  // Campus
+  const cmap=new Map();
+  [...STATE.inscritos,...STATE.reinscritos].forEach(r=>{
+    if(!r['Campus'])return;
+    const k=normC(r['Campus']);
+    if(!cmap.has(k))cmap.set(k,String(r['Campus']).trim());
+  });
+  const campusOpts=[...cmap.entries()].sort((a,b)=>a[1].localeCompare(b[1])).map(([k,v])=>({value:k,label:v}));
+
+  // Niveles
+  const nlvl=new Set();
+  [...STATE.inscritos,...STATE.reinscritos].forEach(r=>r['Nivel']&&nlvl.add(String(r['Nivel']).trim()));
+  const nivelOpts=[...nlvl].sort().map(n=>({value:n,label:n}));
+
+  // Meses from historico
+  const mset=new Set(STATE.historico.map(r=>String(r['Mes']||'').trim()).filter(Boolean));
+  const mesOpts=MONTHS_FULL.filter(m=>mset.has(m)).map(m=>({value:m,label:m}));
+
+  setupMS('campus',campusOpts);
+  setupMS('nivel', nivelOpts);
+  setupMS('tipo',  TIPO_OPTS);
+  setupMS('meses', mesOpts, false); // no "Todas" option, individual months
+}
+
+function setupMS(key, options, hasAll=true){
+  const wrap=document.querySelector(`.multi-select[data-key="${key}"]`);
+  const dd  =wrap.querySelector('.ms-dropdown');
+  const inp =wrap.querySelector('.ms-input');
+
+  const allHtml = hasAll ? `<div class="ms-option all-opt" data-value="__ALL__"><span class="ms-check"></span><span>Todas</span></div>` : '';
+  dd.innerHTML = allHtml + options.map(o=>`<div class="ms-option" data-value="${o.value}"><span class="ms-check"></span><span>${o.label}</span></div>`).join('');
+
+  const refresh=()=>{
+    const sel=STATE.filters[key];
+    dd.querySelectorAll('.ms-option').forEach(opt=>{
+      const v=opt.dataset.value;
+      opt.classList.toggle('checked', sel.has(v)||(!hasAll&&sel.size===0&&v===options[0]?.value));
+    });
+    let txt;
+    if(key==='meses'){
+      if(sel.size===0) txt=CURRENT_MONTH;
+      else if(sel.size===1) txt=Array.from(sel)[0];
+      else txt=`${sel.size} meses`;
+    } else {
+      if(isAll(sel)||sel.size===0) txt='Todas';
+      else if(sel.size===1){const v=Array.from(sel)[0];const o=options.find(o=>o.value===v);txt=o?o.label:v;}
+      else txt=`${sel.size} seleccionados`;
+    }
+    inp.querySelector('.ms-text').textContent=txt;
+  };
+  refresh();
+
+  inp.onclick=e=>{
+    e.stopPropagation();
+    document.querySelectorAll('.ms-dropdown.open').forEach(d=>{if(d!==dd)d.classList.remove('open');});
+    dd.classList.toggle('open');
+  };
+  dd.querySelectorAll('.ms-option').forEach(opt=>{
+    opt.onclick=e=>{
+      e.stopPropagation();
+      const v=opt.dataset.value;
+      const sel=STATE.filters[key];
+      if(v==='__ALL__'){sel.clear();sel.add('__ALL__');}
+      else{
+        sel.delete('__ALL__');
+        if(sel.has(v))sel.delete(v);else sel.add(v);
+        if(sel.size===0)sel.add('__ALL__');
+      }
+      refresh();
+      renderAll();
+    };
+  });
+}
+document.addEventListener('click',()=>document.querySelectorAll('.ms-dropdown.open').forEach(d=>d.classList.remove('open')));
+
+/* ================================================================
+   FILTER HELPERS
+================================================================ */
+function matchC(r){return isAll(STATE.filters.campus)||STATE.filters.campus.has(normC(r['Campus']))}
+function matchN(r){return isAll(STATE.filters.nivel)||STATE.filters.nivel.has(String(r['Nivel']||'').trim())}
+function tipoHas(t){return isAll(STATE.filters.tipo)||STATE.filters.tipo.has(t)}
+
+function getInscritos(){return tipoHas('inscritos')?STATE.inscritos.filter(r=>matchC(r)&&matchN(r)):[];}
+function getReinscritos(){return tipoHas('reinscritos')?STATE.reinscritos.filter(r=>matchC(r)&&matchN(r)):[];}
+
+function getSelectedMonths(){
+  const s=STATE.filters.meses;
+  if(s.size===0||s.has('__ALL__')) return [CURRENT_MONTH];
+  return [...s];
+}
+
+/* ================================================================
+   AGGREGATE
+================================================================ */
+function aggInsc(data){
+  let mp=0,md=0,mv=0,ad=0,av=0,ag=0;
+  data.forEach(r=>{
+    mp+=(+r['Meta 26 Piso']||0);
+    md+=(+r[' Meta Dígital']||+r['Meta Dígital']||0);
+    mv+=(+r['Meta Vinculación']||0);
+    ad+=(+r['Avance Dígital']||0);
+    av+=(+r['Avance Vinculación']||0);
+    ag+=(+r['Avance meta general']||0);
+  });
+  return{mp,md,mv,ad,av,ag};
+}
+
+/* ================================================================
+   GAUGE
+================================================================ */
+function drawGauge(svgId,valId,metaId,pct,meta,av){
+  const svg=$(svgId);
+  pct=Math.max(0,Math.min(1,pct||0));
+  const cx=100,cy=100,r=76;
+  const arc=(a1,a2,col,w)=>{
+    const sx=cx+r*Math.cos(Math.PI*a1/180),sy=cy+r*Math.sin(Math.PI*a1/180);
+    const ex=cx+r*Math.cos(Math.PI*a2/180),ey=cy+r*Math.sin(Math.PI*a2/180);
+    return`<path d="M ${sx} ${sy} A ${r} ${r} 0 ${Math.abs(a2-a1)>180?1:0} 1 ${ex} ${ey}" stroke="${col}" stroke-width="${w}" fill="none" stroke-linecap="butt"/>`;
+  };
+  const aOf=p=>180+p*180;
+  let h=arc(180,360,'#d4e0f0',12);
+  const col=colorPct(pct);
+  if(pct>0)h+=arc(180,aOf(pct),col,12);
+  [.25,.5,.75].forEach(t=>{
+    const a=aOf(t);
+    const ix=cx+(r-8)*Math.cos(Math.PI*a/180),iy=cy+(r-8)*Math.sin(Math.PI*a/180);
+    const ox=cx+(r+3)*Math.cos(Math.PI*a/180),oy=cy+(r+3)*Math.sin(Math.PI*a/180);
+    h+=`<line x1="${ix}" y1="${iy}" x2="${ox}" y2="${oy}" stroke="#283a5e" stroke-width="1"/>`;
+  });
+  const na=aOf(pct);
+  const nx=cx+(r-3)*Math.cos(Math.PI*na/180),ny=cy+(r-3)*Math.sin(Math.PI*na/180);
+  h+=`<line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="${col}" stroke-width="2.5" stroke-linecap="round"/>`;
+  h+=`<circle cx="${cx}" cy="${cy}" r="3.5" fill="${col}"/><circle cx="${cx}" cy="${cy}" r="1.5" fill="#070d1c"/>`;
+  h+=`<text x="22" y="118" fill="#4e5f78" font-family="Inter" font-size="11" font-weight="600">0%</text>`;
+  h+=`<text x="178" y="118" fill="#4e5f78" font-family="Inter" font-size="11" font-weight="600" text-anchor="end">100%</text>`;
+  svg.innerHTML=h;
+  $(valId).innerHTML=Math.round(pct*100)+'<small>%</small>';
+  $(metaId).innerHTML=`Avance: <b>${fmt(av)}</b> / Meta: <b>${fmt(meta)}</b>`;
+}
+
+/* ================================================================
+   RANKING
+================================================================ */
+function buildRanking(){
+  // Build per-campus avance from ALL inscritos (no nivel/tipo filter for ranking, only campus)
+  const cmap={};
+  STATE.inscritos.forEach(r=>{
+    const key=normC(r['Campus']);
+    if(!key)return;
+    if(!cmap[key])cmap[key]={label:String(r['Campus']).trim(),av:0,meta:0};
+    cmap[key].av  +=(+r['Avance meta general']||0);
+    cmap[key].meta+=(+r['Meta 26 Piso']||0);
+  });
+  const entries=Object.entries(cmap)
+    .filter(([,v])=>v.meta>0)
+    .map(([k,v])=>({k,label:v.label,pct:v.meta>0?v.av/v.meta:0,av:v.av,meta:v.meta}))
+    .sort((a,b)=>b.pct-a.pct);
+
+  const UO  = entries.filter(e=>e.label.trim().toUpperCase().startsWith('UO'));
+  const CSA = entries.filter(e=>e.label.trim().toUpperCase().startsWith('CSA'));
+
+  return{UO,CSA,all:entries};
+}
+
+const medals=['medal-1','medal-2','medal-3'];
+function renderRankSection(containerId,list){
+  const el=$(containerId);
+  if(!list.length){el.innerHTML='<div class="empty" style="padding:10px">Sin datos</div>';return;}
+  el.innerHTML=list.slice(0,3).map((e,i)=>`
+    <div class="rk-item">
+      <div class="rk-medal ${medals[i]}">${i+1}</div>
+      <div class="rk-name" title="${e.label}">${e.label}</div>
+      <div class="rk-pct" style="color:${colorPct(e.pct)}">${Math.round(e.pct*100)}%</div>
+    </div>
+  `).join('');
+}
+
+function renderRanking(ranking){
+  renderRankSection('rkUO', ranking.UO);
+  renderRankSection('rkCSA',ranking.CSA);
+}
+
+/* ================================================================
+   POSITION KPI
+================================================================ */
+function computePosition(ranking){
+  // Which campus is selected?
+  if(isAll(STATE.filters.campus)||STATE.filters.campus.size!==1) return null;
+  const selC=Array.from(STATE.filters.campus)[0];
+  // Try UO
+  const uoIdx=ranking.UO.findIndex(e=>normC(e.label)===selC||normC(e.k)===selC);
+  if(uoIdx>=0) return{pos:uoIdx+1,type:'UO',total:ranking.UO.length};
+  const csaIdx=ranking.CSA.findIndex(e=>normC(e.label)===selC||normC(e.k)===selC);
+  if(csaIdx>=0) return{pos:csaIdx+1,type:'CSA',total:ranking.CSA.length};
+  return null;
+}
+
+/* ================================================================
+   DETAIL TABLE
+================================================================ */
+function renderDetailTable(inscData, reincData, tipoMode){
+  const wrap=$('tableWrap');
+  const sub=$('detailSub');
+
+  const campLbl=isAll(STATE.filters.campus)?'Todos los campus':
+    STATE.filters.campus.size===1?
+      (document.querySelector(`.multi-select[data-key="campus"] .ms-option[data-value="${Array.from(STATE.filters.campus)[0]}"] span:last-child`)?.textContent||'Campus'):
+      `${STATE.filters.campus.size} campus`;
+  const nivLbl=isAll(STATE.filters.nivel)?'todos los niveles':Array.from(STATE.filters.nivel).join(', ');
+
+  if(tipoMode==='reinscritos'){
+    if(!reincData.length){wrap.innerHTML=`<table class="dt"><thead><tr><th>Campus</th><th>Nivel</th><th class="num">Meta</th><th class="num">Avance</th><th class="num">Pend.</th><th class="num">%</th></tr></thead><tbody><tr><td colspan="6" class="empty">Sin datos</td></tr></tbody></table>`;sub.textContent=`${campLbl} · ${nivLbl}`;return;}
+    const rows=reincData.filter(r=>(+r['Meta Reinscripción']||0)>0||(+r['Avance']||0)>0)
+      .map(r=>{const m=+r['Meta Reinscripción']||0,a=+r['Avance']||0,p=m>0?a/m:0;return{campus:r['Campus'],nivel:r['Nivel'],m,a,pend:Math.max(0,m-a),p};})
+      .sort((a,b)=>b.p-a.p);
+    const tm=rows.reduce((s,r)=>s+r.m,0),ta=rows.reduce((s,r)=>s+r.a,0);
+    const tp=tm>0?ta/tm:0;
+    sub.textContent=`Reinscripción · ${campLbl} · ${nivLbl} · ${rows.length} registros`;
+    wrap.innerHTML=`<table class="dt"><thead><tr><th>Campus</th><th>Nivel</th><th class="num">Meta</th><th class="num">Avance</th><th class="num">Pend.</th><th class="num">%</th></tr></thead><tbody>
+      ${rows.map(r=>`<tr${r.a<10&&r.m>0?' class="low-perf"':''}><td>${r.campus}</td><td>${r.nivel}</td><td class="num">${fmt(r.m)}</td><td class="num">${fmt(r.a)}</td><td class="num">${fmt(r.pend)}</td><td class="num"><span class="pp ${ppClass(r.p)}">${fmtPct(r.p)}</span></td></tr>`).join('')}
+    </tbody><tfoot><tr><td colspan="2">Total</td><td class="num">${fmt(tm)}</td><td class="num">${fmt(ta)}</td><td class="num">${fmt(Math.max(0,tm-ta))}</td><td class="num"><span class="pp ${ppClass(tp)}">${fmtPct(tp)}</span></td></tr></tfoot></table>`;
+    return;
+  }
+
+  // Inscritos – filter out rows where meta=0 AND av=0
+  const active=inscData.filter(r=>(+r['Meta 26 Piso']||0)>0||(+r['Avance meta general']||0)>0);
+  if(!active.length){
+    sub.textContent=`${campLbl} · ${nivLbl}`;
+    wrap.innerHTML=`<table class="dt"><thead><tr><th>Oferta Educativa</th><th>Mod.</th><th class="num">Meta DPV</th><th class="num">%DPV</th><th class="num">Piso</th><th class="num">Avance</th><th class="num">%</th></tr></thead><tbody><tr><td colspan="7" class="empty">Sin datos activos</td></tr></tbody></table>`;
+    return;
+  }
+
+  // Sort: mayor a menor % de avance (programas con bajo desempeño quedan al fondo naturalmente)
+  const rows=active.map(r=>{
+    const piso=+r['Meta 26 Piso']||0,av=+r['Avance meta general']||0,p=piso>0?av/piso:0;
+    return{prog:r['Programa Académico']||'—',mod:r['Modalidad']||'—',ma:+r['Meta 26 antes DPV']||0,dpv:+r['% D.P.V.']||0,piso,av,p,isLow:av<10&&piso>0};
+  });
+  rows.sort((a,b)=>b.av-a.av);
+
+  const tp=rows.reduce((s,r)=>s+r.piso,0),ta=rows.reduce((s,r)=>s+r.av,0),tm=rows.reduce((s,r)=>s+r.ma,0);
+  const tpp=tp>0?ta/tp:0;
+
+  sub.textContent=`${campLbl} · ${nivLbl} · ${rows.length} programas${rows.filter(r=>r.isLow).length>0?` · ⚠ ${rows.filter(r=>r.isLow).length} con <10`:''}`;
+  wrap.innerHTML=`<table class="dt">
+    <thead><tr><th>Oferta Educativa</th><th>Mod.</th><th class="num">Meta DPV</th><th class="num">%DPV</th><th class="num">Piso</th><th class="num">Avance</th><th class="num">%</th></tr></thead>
+    <tbody>
+      ${rows.map(r=>`<tr${r.isLow?' class="low-perf"':''}><td class="prog-name">${r.isLow?'⚠ ':''}${r.prog}</td><td>${r.mod}</td><td class="num">${fmt(r.ma)}</td><td class="num">${fmtPct(r.dpv)}</td><td class="num">${fmt(r.piso)}</td><td class="num">${fmt(r.av)}</td><td class="num"><span class="pp ${ppClass(r.p)}">${fmtPct(r.p)}</span></td></tr>`).join('')}
+    </tbody>
+    <tfoot><tr><td colspan="2">Total general</td><td class="num">${fmt(tm)}</td><td class="num">—</td><td class="num">${fmt(tp)}</td><td class="num">${fmt(ta)}</td><td class="num"><span class="pp ${ppClass(tpp)}">${fmtPct(tpp)}</span></td></tr></tfoot>
+  </table>`;
+}
+
+/* ================================================================
+   COMPARATIVE CHART – only selected months
+================================================================ */
+let chartInst=null;
+function renderChart(inscData){
+  const selMonths=getSelectedMonths();
+
+  // Filter 2025 historico
+  let h2025=STATE.historico.slice();
+  if(!isAll(STATE.filters.campus)) h2025=h2025.filter(r=>STATE.filters.campus.has(normC(r['Campus'])));
+  if(!isAll(STATE.filters.nivel))  h2025=h2025.filter(r=>STATE.filters.nivel.has(String(r['Nivel']||'').trim()));
+
+  // Aggregate 2025 per selected month
+  const data2025=selMonths.map(m=>h2025.filter(r=>String(r['Mes']||'').trim()===m).reduce((s,r)=>s+(+r['Avance']||0),0));
+
+  // 2026: cumulative from Concentrado (snapshot, same value for each month shown)
+  const av2026=inscData.reduce((s,r)=>s+(+r['Avance meta general']||0),0);
+  const data2026=selMonths.map(()=>av2026||null);
+
+  // Delta badge (single month: exact compare; multiple months: compare current vs sum)
+  const sum2025=data2025.reduce((s,v)=>s+v,0);
+  let deltaHtml='';
+  if(sum2025>0){
+    const pctDelta=(av2026-sum2025)/sum2025;
+    const absD=Math.abs(pctDelta*100).toFixed(0);
+    if(pctDelta>0.01)      deltaHtml=`<span class="delta-badge delta-pos">▲ +${absD}% vs 2025</span>`;
+    else if(pctDelta<-0.01)deltaHtml=`<span class="delta-badge delta-neg">▼ −${absD}% vs 2025</span>`;
+    else                   deltaHtml=`<span class="delta-badge delta-neu">≈ Sin variación vs 2025</span>`;
+  }
+  $('deltaBadge').innerHTML=deltaHtml;
+
+  // Labels (short month names)
+  const labels=selMonths.map(m=>{const i=MONTHS_FULL.indexOf(m);return i>=0?MONTHS_SHORT[i]:m;});
+
+  const sub=`${selMonths.length===1?selMonths[0]+' 2025 vs '+selMonths[0]+' 2026':selMonths.map(m=>m.slice(0,3)).join('+')+' acumulado 2025 vs 2026'}`;
+  $('chartSub').textContent=sub;
+
+  const ctx=$('histChart').getContext('2d');
+  if(chartInst)chartInst.destroy();
+
+  chartInst=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'Ciclo 2025',data:data2025,backgroundColor:'#4a7cc9',borderColor:'#2e5ca8',borderWidth:1,borderRadius:2,barPercentage:.6,categoryPercentage:.65},
+        {label:'Ciclo 2026',data:data2026,backgroundColor:'#1a4fa0',borderColor:'#2e6acc',borderWidth:1,borderRadius:2,barPercentage:.6,categoryPercentage:.65}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:{duration:500},
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#ffffff',borderColor:'#c2cfe0',borderWidth:1,padding:9,
+          titleFont:{family:'Inter',size:11,weight:'600'},titleColor:'#0d1e3d',
+          bodyFont:{family:'Inter',size:11},bodyColor:'#2c4470',displayColors:true,boxPadding:3,
+          callbacks:{label:c=>c.parsed.y==null?null:`${c.dataset.label}: ${fmt(c.parsed.y)}`}
+        }
+      },
+      scales:{
+        x:{grid:{display:false},border:{color:'#1c2946'},ticks:{color:'#2c4470',font:{family:'Inter',size:10.5,weight:'500'}}},
+        y:{grid:{color:'#e4ecf7'},border:{display:false},ticks:{color:'#6a82a8',font:{family:'Inter',size:10},callback:v=>fmt(v)}}
+      }
+    },
+    plugins:[{
+      id:'vals',
+      afterDatasetsDraw(chart){
+        const{ctx}=chart;
+        chart.data.datasets.forEach((ds,di)=>{
+          chart.getDatasetMeta(di).data.forEach((bar,i)=>{
+            const v=ds.data[i];if(!v)return;
+            ctx.save();ctx.fillStyle='#0d1e3d';ctx.font='600 10px Inter';ctx.textAlign='center';
+            ctx.fillText(fmt(v),bar.x,bar.y-5);ctx.restore();
+          });
+        });
+      }
+    }]
+  });
+}
+
+/* ================================================================
+   INSIGHTS — Análisis ejecutivo de desempeño comercial
+================================================================ */
+function renderInsights(inscData,reincData){
+  const list=$('insightsList');
+  if(!inscData.length&&!reincData.length){list.innerHTML=`<div class="empty">Sin datos para generar insights</div>`;return;}
+
+  const ins=[];
+  const agg=aggInsc(inscData);
+  const selMonths=getSelectedMonths();
+  const avgPct=agg.mp>0?agg.ag/agg.mp:0;
+
+  // Contexto histórico 2025
+  let h25=STATE.historico.slice();
+  if(!isAll(STATE.filters.campus))h25=h25.filter(r=>STATE.filters.campus.has(normC(r['Campus'])));
+  if(!isAll(STATE.filters.nivel)) h25=h25.filter(r=>STATE.filters.nivel.has(String(r['Nivel']||'').trim()));
+  const av25=selMonths.reduce((s,m)=>s+h25.filter(r=>String(r['Mes']||'').trim()===m).reduce((x,r)=>x+(+r['Avance']||0),0),0);
+  const av26=agg.ag;
+  const deltaVsAnio=av25>0?(av26-av25)/av25:null;
+
+  // INSIGHT 1: Programa de peor desempeño individual
+  const active=inscData.filter(r=>(+r['Meta 26 Piso']||0)>0);
+  if(active.length>0){
+    const wPct=active.map(r=>{const piso=+r['Meta 26 Piso']||0,av=+r['Avance meta general']||0;return{prog:r['Programa Académico']||'—',mod:r['Modalidad']||'',piso,av,pct:piso>0?av/piso:0};});
+    wPct.sort((a,b)=>a.pct-b.pct);
+    const w=wPct[0],w2=wPct[1];
+    const diff=Math.round((avgPct-w.pct)*100);
+    let body=`<b>${w.prog}${w.mod?' ('+w.mod+')':''}</b> registra el menor avance del corte: <b>${Math.round(w.pct*100)}%</b> (${fmt(w.av)} de ${fmt(w.piso)} inscritos meta). `;
+    body+=`Se ubica <b>${diff} puntos porcentuales por debajo</b> del promedio institucional (${Math.round(avgPct*100)}%). `;
+    if(w.av<10)body+=`Con menos de 10 alumnos captados, la apertura de grupo está en riesgo real. `;
+    if(w2)body+=`Le sigue <b>${w2.prog}</b> con ${Math.round(w2.pct*100)}%, también rezagado respecto al consorcio.`;
+    ins.push({type:w.pct<=.25?'danger':'warn',icon:'↓',title:`Rezago: ${w.prog}`,body});
+  }
+
+  // INSIGHT 2: Comparativo vs 2025
+  if(deltaVsAnio!==null){
+    const absD=Math.abs(deltaVsAnio*100).toFixed(1);
+    const mesRef=selMonths.length===1?selMonths[0]:`${selMonths.length} meses acumulados`;
+    let type,icon,body;
+    if(deltaVsAnio<-0.05){
+      type='danger';icon='▼';
+      body=`El avance actual (<b>${fmt(av26)}</b>) está <b>${absD}% por debajo</b> del mismo periodo 2025 (<b>${fmt(av25)}</b>) para ${mesRef}. Esta brecha refleja una desaceleración en captación que amerita revisión urgente del embudo comercial: fuentes de lead, tiempos de cierre y cobertura del equipo de admisiones.`;
+    }else if(deltaVsAnio<0.02){
+      type='warn';icon='≈';
+      body=`Avance prácticamente equivalente al mismo periodo 2025 (${fmt(av25)} vs ${fmt(av26)} inscritos en ${mesRef}). Sin crecimiento real. Si la meta 2026 contempla incremento sobre el año anterior, el ritmo actual es insuficiente para lograrlo.`;
+    }else{
+      type='success';icon='▲';
+      body=`El avance actual (<b>${fmt(av26)}</b>) supera en <b>${absD}%</b> al mismo periodo 2025 (<b>${fmt(av25)}</b>) para ${mesRef}. Ritmo de captación positivo. Identificar las palancas de este crecimiento para replicarlas en programas o campus con rezago.`;
+    }
+    ins.push({type,icon,title:`${deltaVsAnio>=0.02?'+':''}${absD}% vs ${mesRef} 2025`,body});
+  }
+
+  // INSIGHT 3: Cluster de ofertas por debajo del umbral crítico (< 60% del promedio)
+  const belowAvg=inscData.filter(r=>{const piso=+r['Meta 26 Piso']||0,av=+r['Avance meta general']||0;return piso>0&&(piso>0?av/piso:0)<avgPct*0.6;});
+  if(belowAvg.length>0){
+    const names=belowAvg.slice(0,4).map(r=>{const p=+r['Meta 26 Piso']||0,a=+r['Avance meta general']||0;return`${r['Programa Académico']||'—'} (${Math.round(p>0?a/p*100:0)}%)`;}).join(', ');
+    ins.push({type:belowAvg.length>5?'danger':'warn',icon:'!',
+      title:`${belowAvg.length} oferta${belowAvg.length>1?'s':''} con desempeño crítico`,
+      body:`Las siguientes ofertas tienen avance <b>más de 40% inferior al promedio institucional</b> (${Math.round(avgPct*100)}%): <b>${names}${belowAvg.length>4?` y ${belowAvg.length-4} más`:''}</b>. Evaluar si la meta de cada programa es realista para el mercado actual y reforzar comunicación y seguimiento focalizado.`
+    });
+  }
+
+  // INSIGHT 4: Desequilibrio entre canales digital y vinculación
+  if(agg.md>0&&agg.mv>0){
+    const pd=agg.ad/agg.md,pv=agg.av/agg.mv,diff=Math.abs(pd-pv);
+    if(diff>0.15){
+      const mejor=pd>pv?'Digital':'Vinculación',menor=pd>pv?'Vinculación':'Digital';
+      const pM=Math.round(Math.max(pd,pv)*100),pm=Math.round(Math.min(pd,pv)*100);
+      ins.push({type:'warn',icon:'↔',title:`Desequilibrio canal ${menor}`,
+        body:`<b>${mejor}</b> avanza al <b>${pM}%</b> mientras <b>${menor}</b> alcanza solo <b>${pm}%</b>, brecha de <b>${Math.round(diff*100)} puntos</b>. La sobredependencia de un canal aumenta el riesgo de no alcanzar la meta global. Redistribuir acciones comerciales para equilibrar la captación.`
+      });
+    }
+  }
+
+  // INSIGHT 5: Programa líder (best performer muy por encima del promedio)
+  const active2=inscData.filter(r=>(+r['Meta 26 Piso']||0)>0&&(+r['Avance meta general']||0)>0);
+  if(active2.length>1){
+    const wPct2=active2.map(r=>({prog:r['Programa Académico']||'—',mod:r['Modalidad']||'',av:+r['Avance meta general']||0,piso:+r['Meta 26 Piso']||0,pct:(+r['Meta 26 Piso']||0)>0?(+r['Avance meta general']||0)/(+r['Meta 26 Piso']||0):0}));
+    wPct2.sort((a,b)=>b.pct-a.pct);
+    const best=wPct2[0];
+    if(best.pct>avgPct*1.3&&best.pct>0.3){
+      ins.push({type:'success',icon:'★',title:`Líder: ${best.prog}`,
+        body:`<b>${best.prog}${best.mod?' ('+best.mod+')':''}</b> lidera con <b>${Math.round(best.pct*100)}%</b> de avance (${fmt(best.av)} de ${fmt(best.piso)}), <b>${Math.round((best.pct-avgPct)*100)} puntos sobre el promedio institucional</b>. Documentar y transferir sus prácticas de captación hacia los programas de menor desempeño.`
+      });
+    }
+  }
+
+  list.innerHTML=ins.length?ins.map((ins,i)=>`
+    <div class="insight ${ins.type}">
+      <div class="insight-head">
+        <div class="insight-icon">${ins.icon}</div>
+        <div class="insight-title">${i+1}. ${ins.title}</div>
+      </div>
+      <div class="insight-body">${ins.body}</div>
+    </div>`).join(''):`<div class="empty">Sin suficientes datos para análisis</div>`;
+}
+
+/* ================================================================
+   RENDER ALL
+================================================================ */
+function renderAll(){
+  const inscData=getInscritos();
+  const reincData=getReinscritos();
+  const tipoMode=tipoHas('inscritos')&&tipoHas('reinscritos')?'both':tipoHas('inscritos')?'inscritos':'reinscritos';
+
+  const agg=aggInsc(inscData);
+  let rm=agg.mp,ra=agg.ag;
+  let rd2=agg.md,ra2=agg.ad,rm2=agg.mv,ra2v=agg.av;
+  let reinMeta=0,reinAv=0;
+  reincData.forEach(r=>{reinMeta+=(+r['Meta Reinscripción']||0);reinAv+=(+r['Avance']||0);});
+  if(tipoMode==='both'){rm+=reinMeta;ra+=reinAv;}
+  else if(tipoMode==='reinscritos'){rm=reinMeta;ra=reinAv;}
+  const pg=rm>0?ra/rm:0;
+  const pd=rd2>0?ra2/rd2:0;
+  const pv=rm2>0?ra2v/rm2:0;
+
+  drawGauge('gG','gGV','gGM',pg,rm,ra);
+  drawGauge('gD','gDV','gDM',pd,rd2,ra2);
+  drawGauge('gV','gVV','gVM',pv,rm2,ra2v);
+
+  $('kpiIns').textContent=fmt(ra);
+  $('kpiPend').textContent=fmt(Math.max(0,rm-ra));
+  $('kpiProg').textContent=fmt(inscData.length+reincData.length);
+  const cs=new Set();inscData.forEach(r=>cs.add(normC(r['Campus'])));reincData.forEach(r=>cs.add(normC(r['Campus'])));
+  $('kpiCamp').textContent=fmt(cs.size);
+
+  // Ranking
+  const ranking=buildRanking();
+  renderRanking(ranking);
+
+  // Position KPI
+  const pos=computePosition(ranking);
+  if(pos){
+    $('kpiPos').textContent=`#${pos.pos}`;
+    $('kpiPosType').textContent=pos.type==='UO'?'Universidades':'Colegios';
+  } else {
+    $('kpiPos').textContent=isAll(STATE.filters.campus)?'Todas':'N/A';
+    $('kpiPosType').textContent='';
+  }
+
+  renderDetailTable(inscData,reincData,tipoMode);
+  renderChart(inscData);
+  renderInsights(inscData,reincData);
+}
+
+/* ================================================================
+   HISTORIAL DE VERSIONES (memoria de sesión)
+================================================================ */
+const VERSION_HISTORY = []; // {name, dateLabel, loadedAt, idx}
+
+/**
+ * Intenta extraer una fecha legible del nombre del archivo.
+ * Soporta formatos: 01_DataDash_23.05.26  /  30.05.2026  /  2026-05-30  /  30_05_26
+ */
+function parseDateFromFilename(name){
+  // Patrón: DD.MM.YY o DD.MM.YYYY
+  let m = name.match(/(\d{1,2})[._\-](\d{2})[._\-](\d{2,4})/);
+  if(m){
+    const d=m[1].padStart(2,'0'), mo=m[2], y=m[3].length===2?'20'+m[3]:m[3];
+    const months=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const mi=parseInt(mo,10)-1;
+    if(mi>=0&&mi<12) return `${d} ${months[mi]} ${y}`;
+  }
+  // Patrón: YYYY-MM-DD
+  m = name.match(/(\d{4})[._\-](\d{2})[._\-](\d{2})/);
+  if(m){
+    const months=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const mi=parseInt(m[2],10)-1;
+    if(mi>=0&&mi<12) return `${m[3]} ${months[mi]} ${m[1]}`;
+  }
+  return null;
+}
+
+function addToHistory(name){
+  const dateLabel = parseDateFromFilename(name);
+  const loadedAt  = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  // Marcar todos los anteriores como no activos
+  VERSION_HISTORY.forEach(v=>v.active=false);
+  VERSION_HISTORY.push({name, dateLabel, loadedAt, idx:VERSION_HISTORY.length+1, active:true});
+  renderHistory();
+  // Actualizar header
+  $('fileName').textContent = name;
+  $('fileDateLabel').textContent = dateLabel ? `📅 Corte: ${dateLabel}` : `Cargado: ${loadedAt}`;
+}
+
+function renderHistory(){
+  const el=$('histList');
+  if(!VERSION_HISTORY.length){el.innerHTML='<div class="modal-empty">Ningún archivo cargado aún</div>';return;}
+  el.innerHTML=[...VERSION_HISTORY].reverse().map(v=>`
+    <div class="hist-item${v.active?' active':''}">
+      <span class="hist-num">#${v.idx}</span>
+      <span class="hist-name" title="${v.name}">${v.name}</span>
+      ${v.dateLabel?`<span class="hist-date-parsed">${v.dateLabel}</span>`:''}
+      <span class="hist-tag">${v.active?'Activo':v.loadedAt}</span>
+    </div>`).join('');
+}
+
+function openModal(){ $('modalOverlay').classList.add('open'); renderHistory(); }
+function closeModal(){ $('modalOverlay').classList.remove('open'); }
+
+/* ================================================================
+   FILE INPUT
+================================================================ */
+$('excelInput').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  STATE.fileName=f.name;
+  addToHistory(f.name);
+  const rd=new FileReader();
+  rd.onload=ev=>{try{parseWB(ev.target.result);}catch(e){alert('Error al procesar el archivo.\n\n'+e.message);}};
+  rd.readAsArrayBuffer(f);
+});
+
+window.addEventListener('DOMContentLoaded',()=>loadDefault('Data_Dashboard.xlsx'));
+</script>
+
+<!-- ===============================================================
+     GUÍA DE PUBLICACIÓN Y ACTUALIZACIÓN
+     ===============================================================
+     OPCIÓN 1 – MÁS SENCILLA: GitHub Pages (gratuito, URL fija)
+     ─────────────────────────────────────────────────────────────
+     1. Crear cuenta en https://github.com (gratis)
+     2. Crear repositorio público, p.ej. "dashboard-metas"
+     3. Subir este archivo como "index.html"
+     4. Subir "Data_Dashboard.xlsx" al mismo repositorio
+     5. Ir a Settings → Pages → Source: main / root → Save
+     6. URL fija: https://TU-USUARIO.github.io/dashboard-metas/
+     
+     ACTUALIZAR EL EXCEL:
+     • Reemplazar "Data_Dashboard.xlsx" en el repositorio con la
+       versión nueva (mismo nombre de archivo).
+     • El link permanece igual. Los rectores actualizan la página
+       (F5) y ven los datos nuevos automáticamente.
+     
+     ─────────────────────────────────────────────────────────────
+     OPCIÓN 2 – MÁS PROFESIONAL: Netlify Drop (gratuito, sin código)
+     ─────────────────────────────────────────────────────────────
+     1. Ir a https://app.netlify.com/drop
+     2. Arrastrar la CARPETA que contenga:
+        • index.html  (este archivo, renombrado)
+        • Data_Dashboard.xlsx
+     3. Netlify genera una URL automática, p.ej.:
+        https://metas-consorcio.netlify.app
+     4. En "Site settings" puedes personalizar el subdominio.
+     
+     ACTUALIZAR EL EXCEL:
+     • En el panel de Netlify → Deploys → arrastra la carpeta
+       actualizada (con el Excel nuevo, mismo nombre).
+     • La URL no cambia. Los directivos solo refrescan la página.
+     
+     ─────────────────────────────────────────────────────────────
+     REGLA CLAVE: el Excel siempre debe llamarse exactamente
+     "Data_Dashboard.xlsx" y estar en la misma carpeta que index.html
+     =============================================================== -->
+</body>
+</html>
